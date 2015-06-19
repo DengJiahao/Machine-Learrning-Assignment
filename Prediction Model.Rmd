@@ -1,0 +1,57 @@
+---
+title: "Prediction Model"
+author: "Dengjiahao"
+output: html_document
+---
+This easy is going to build a machine learning a lgorithm to predict activity quality    from activity monitors.    
+
+The training data for this project are available [here](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv)  
+The test data are available [here](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv)   
+
+So, first let's read the data.   
+```{r,cache=TRUE}
+data<-read.csv("pml-training.csv")
+library(caret)
+library(kernlab)
+inTrain<-createDataPartition(y=data$classe,p=0.7,list=FALSE)
+training<-data[inTrain,]
+testing<-data[-inTrain,]
+```   
+
+
+
+Then, let's build the random forests model to predict.   
+Since there are some variables that contains NA values, I choose some variables as predictors. They do not contain so many NA values.   
+
+```{r,cache=TRUE}
+model<-train(classe~new_window+num_window+roll_belt+pitch_belt+yaw_belt+total_accel_belt+gyros_belt_x+gyros_belt_y+gyros_belt_z+accel_belt_x+accel_belt_y+accel_belt_z+magnet_belt_x+magnet_belt_y+magnet_belt_z+roll_arm+pitch_arm+yaw_arm+total_accel_arm+gyros_arm_x+gyros_arm_y+gyros_arm_z+accel_arm_x+accel_arm_y+accel_arm_z+magnet_arm_x+magnet_arm_y+magnet_arm_z+roll_dumbbell+pitch_dumbbell+yaw_dumbbell,data=training,method="rf")
+```     
+
+Then, we can exam the prediction model using the function accuracy.    
+```{r,cache=TRUE}
+accuracy<-function(values,prediction){sum(prediction == values)/length(values)}
+prediction<-predict(model,testing)
+accuracy(testing$classe,prediction)
+```   
+
+So, we can tell that the accuracy is very high.    
+let's generate the answer of the test file.  
+
+```{r,cache=TRUE}
+testing2<-read.csv("pml-testing.csv")
+answers<-predict(model,testing2)
+answers
+```   
+
+Finally, let's generate the files to submit for the submission part.  
+```{r,cache=TRUE}
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+pml_write_files(answers)
+```   
+
